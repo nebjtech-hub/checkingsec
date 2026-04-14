@@ -13,9 +13,19 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import SignaturePad from '../components/SignaturePad'
+import TimePicker from '../components/TimePicker'
 import Layout from '../components/Layout'
 
-const STEP_SEARCH = 'search'
+function getNearestSlot() {
+  const d = new Date()
+  const total = d.getHours() * 60 + d.getMinutes()
+  const rounded = Math.round(total / 15) * 15
+  const h = Math.floor(rounded / 60) % 24
+  const m = rounded % 60
+  return `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`
+}
+
+
 const STEP_FORM   = 'form'
 const STEP_DONE   = 'done'
 
@@ -61,7 +71,7 @@ export default function AgentCheckoutPage() {
     setSelected(record)
     setObservations(record.observations || '')
     setRemisePiece('Non')
-    setHeureSortie('')
+    setHeureSortie(getNearestSlot())   // Auto-rempli à l'heure actuelle
     setSignatureSortie('')
     setErrors({})
     setStep(STEP_FORM)
@@ -232,14 +242,13 @@ export default function AgentCheckoutPage() {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth required label="Heure de sortie"
+                    <TimePicker
+                      label="Heure de sortie"
                       value={heureSortie}
-                      onChange={e => { setHeureSortie(e.target.value); if (errors.heureSortie) setErrors({}) }}
-                      placeholder="ex: 16h45"
+                      onChange={v => { setHeureSortie(v); if (errors.heureSortie) setErrors({}) }}
+                      required
                       error={!!errors.heureSortie}
                       helperText={errors.heureSortie}
-                      sx={{ '& input': { fontSize: { xs: 16, sm: 14 } } }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>

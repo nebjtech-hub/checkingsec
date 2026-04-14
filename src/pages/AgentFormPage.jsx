@@ -9,6 +9,7 @@ import { Send, Refresh, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import SignaturePad from '../components/SignaturePad'
+import TimePicker from '../components/TimePicker'
 import Layout from '../components/Layout'
 
 const INITIAL = {
@@ -25,6 +26,15 @@ const INITIAL = {
   signature_entree:         '',
   observations:             '',
   agent_securite:           '',
+}
+
+function getNearestSlot() {
+  const d = new Date()
+  const total = d.getHours() * 60 + d.getMinutes()
+  const rounded = Math.round(total / 15) * 15
+  const h = Math.floor(rounded / 60) % 24
+  const m = rounded % 60
+  return `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`
 }
 
 const STEPS = ["Identité du visiteur", "Visite & Pièce d'identité", "Badge & Signature"]
@@ -47,7 +57,7 @@ export default function AgentFormPage() {
   const { user }              = useAuth()
   const theme                 = useTheme()
   const isMobile              = useMediaQuery(theme.breakpoints.down('sm'))
-  const [form, setForm]       = useState({ ...INITIAL, agent_securite: user?.fullName ?? '' })
+  const [form, setForm]       = useState({ ...INITIAL, agent_securite: user?.fullName ?? '', heure_entree: getNearestSlot() })
   const [errors, setErrors]   = useState({})
   const [loading, setLoading] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
@@ -92,7 +102,7 @@ export default function AgentFormPage() {
       const { error } = await supabase.from('registre').insert({ ...form, agent_user_id: user.userId })
       if (error) throw error
       setSnack({ open: true, msg: 'Entrée enregistrée avec succès !', severity: 'success' })
-      setForm({ ...INITIAL, agent_securite: user?.fullName ?? '' })
+      setForm({ ...INITIAL, agent_securite: user?.fullName ?? '', heure_entree: getNearestSlot() })
       setErrors({})
       setActiveStep(0)
     } catch (err) {
@@ -112,7 +122,14 @@ export default function AgentFormPage() {
           <Field name="date_entree" label="Date d'entrée" type="date" required {...fieldProps} />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <Field name="heure_entree" label="Heure d'entrée" placeholder="ex: 08h30" required {...fieldProps} />
+          <TimePicker
+            label="Heure d'entrée"
+            value={form.heure_entree}
+            onChange={v => set('heure_entree')({ target: { value: v } })}
+            required
+            error={!!errors.heure_entree}
+            helperText={errors.heure_entree}
+          />
         </Grid>
         <Grid item xs={12} sm={6}>
           <Field name="nom" label="Nom" required inputProps={{ style: { textTransform: 'uppercase' } }} {...fieldProps} />
