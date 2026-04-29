@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import {
   Box, Card, CardContent, CardHeader, Grid, TextField, Button,
-  MenuItem, Alert, Snackbar, Typography, Divider, CircularProgress,
-  FormControl, InputLabel, Select, Stepper, Step, StepLabel,
-  MobileStepper, useTheme, useMediaQuery,
+  Alert, Snackbar, Typography, Divider, CircularProgress,
+  FormControl, InputLabel, Select, MenuItem,
+  Stepper, Step, StepLabel, MobileStepper,
+  useTheme, useMediaQuery,
 } from '@mui/material'
 import { Send, Refresh, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material'
 import { useAuth } from '../contexts/AuthContext'
@@ -30,7 +31,7 @@ const INITIAL = {
 
 function getNearestSlot() {
   const d = new Date()
-  const total = d.getHours() * 60 + d.getMinutes()
+  const total   = d.getHours() * 60 + d.getMinutes()
   const rounded = Math.round(total / 15) * 15
   const h = Math.floor(rounded / 60) % 24
   const m = rounded % 60
@@ -39,14 +40,17 @@ function getNearestSlot() {
 
 const STEPS = ["Identité du visiteur", "Visite & Pièce d'identité", "Badge & Signature"]
 
-// Field défini HORS du composant parent pour éviter la perte de focus à chaque frappe
+// ── Field défini HORS du composant pour éviter la perte de focus ──
 function Field({ name, label, required, type = 'text', form, errors, onChange, ...rest }) {
   return (
     <TextField
-      fullWidth label={label} value={form[name]}
+      fullWidth label={label}
+      value={form[name]}
       onChange={onChange(name)}
-      error={!!errors[name]} helperText={errors[name]}
-      required={required} type={type}
+      error={!!errors[name]}
+      helperText={errors[name]}
+      required={required}
+      type={type}
       InputLabelProps={type === 'date' ? { shrink: true } : undefined}
       {...rest}
     />
@@ -71,14 +75,14 @@ export default function AgentFormPage() {
   const validateStep = (step) => {
     const errs = {}
     if (step === 0) {
-      if (!form.date_entree)    errs.date_entree = 'Requis'
-      if (!form.heure_entree)   errs.heure_entree = 'Requis'
-      if (!form.nom.trim())     errs.nom = 'Requis'
-      if (!form.prenom.trim())  errs.prenom = 'Requis'
+      if (!form.date_entree)   errs.date_entree  = 'Requis'
+      if (!form.heure_entree)  errs.heure_entree = 'Requis'
+      if (!form.nom.trim())    errs.nom           = 'Requis'
+      if (!form.prenom.trim()) errs.prenom        = 'Requis'
     }
     if (step === 1) {
       if (!form.service_personne_visitee) errs.service_personne_visitee = 'Requis'
-      if (!form.motif_visite)             errs.motif_visite = 'Requis'
+      if (!form.motif_visite)             errs.motif_visite             = 'Requis'
     }
     if (step === 2) {
       if (!form.agent_securite) errs.agent_securite = "Nom de l'agent requis"
@@ -112,7 +116,6 @@ export default function AgentFormPage() {
     }
   }
 
-  // Props partagées pour Field — passées explicitement pour éviter la recréation du composant
   const fieldProps = { form, errors, onChange: set }
 
   const renderStep = () => {
@@ -184,6 +187,7 @@ export default function AgentFormPage() {
         </Grid>
       </Grid>
     )
+    return null
   }
 
   return (
@@ -192,16 +196,11 @@ export default function AgentFormPage() {
         Nouvelle entrée visiteur
       </Typography>
 
-      {/* Stepper desktop */}
       {!isMobile && (
         <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
-          {STEPS.map(label => (
-            <Step key={label}><StepLabel>{label}</StepLabel></Step>
-          ))}
+          {STEPS.map(label => <Step key={label}><StepLabel>{label}</StepLabel></Step>)}
         </Stepper>
       )}
-
-      {/* Stepper mobile */}
       {isMobile && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="caption" color="text.secondary">
@@ -222,22 +221,16 @@ export default function AgentFormPage() {
         </CardContent>
       </Card>
 
-      {/* Navigation */}
       {isMobile ? (
         <MobileStepper
-          variant="dots"
-          steps={STEPS.length}
-          position="static"
-          activeStep={activeStep}
-          sx={{ mt: 2, bgcolor: 'transparent' }}
+          variant="dots" steps={STEPS.length} position="static"
+          activeStep={activeStep} sx={{ mt: 2, bgcolor: 'transparent' }}
           nextButton={
-            activeStep < STEPS.length - 1 ? (
-              <Button size="small" onClick={handleNext} endIcon={<KeyboardArrowRight />}>Suivant</Button>
-            ) : (
-              <Button size="small" variant="contained" onClick={handleSubmit} disabled={loading}>
-                {loading ? <CircularProgress size={18} color="inherit" /> : 'Enregistrer'}
-              </Button>
-            )
+            activeStep < STEPS.length - 1
+              ? <Button size="small" onClick={handleNext} endIcon={<KeyboardArrowRight />}>Suivant</Button>
+              : <Button size="small" variant="contained" onClick={handleSubmit} disabled={loading}>
+                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Enregistrer'}
+                </Button>
           }
           backButton={
             <Button size="small" onClick={handleBack} disabled={activeStep === 0} startIcon={<KeyboardArrowLeft />}>
@@ -247,18 +240,23 @@ export default function AgentFormPage() {
         />
       ) : (
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', mt: 2 }}>
-          <Button variant="outlined" onClick={() => { setForm({ ...INITIAL, agent_securite: user?.fullName ?? '' }); setErrors({}); setActiveStep(0) }} startIcon={<Refresh />}>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={() => { setForm({ ...INITIAL, agent_securite: user?.fullName ?? '', heure_entree: getNearestSlot() }); setErrors({}); setActiveStep(0) }}
+          >
             Réinitialiser
           </Button>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="outlined" onClick={handleBack} disabled={activeStep === 0} startIcon={<KeyboardArrowLeft />}>Retour</Button>
-            {activeStep < STEPS.length - 1 ? (
-              <Button variant="contained" onClick={handleNext} endIcon={<KeyboardArrowRight />}>Suivant</Button>
-            ) : (
-              <Button variant="contained" onClick={handleSubmit} disabled={loading} startIcon={loading ? null : <Send />} sx={{ minWidth: 160 }}>
-                {loading ? <CircularProgress size={22} color="inherit" /> : 'Enregistrer'}
-              </Button>
-            )}
+            <Button variant="outlined" onClick={handleBack} disabled={activeStep === 0} startIcon={<KeyboardArrowLeft />}>
+              Retour
+            </Button>
+            {activeStep < STEPS.length - 1
+              ? <Button variant="contained" onClick={handleNext} endIcon={<KeyboardArrowRight />}>Suivant</Button>
+              : <Button variant="contained" onClick={handleSubmit} disabled={loading} startIcon={loading ? null : <Send />} sx={{ minWidth: 160 }}>
+                  {loading ? <CircularProgress size={22} color="inherit" /> : 'Enregistrer'}
+                </Button>
+            }
           </Box>
         </Box>
       )}
